@@ -51,7 +51,7 @@ class LogDataHolder(object):
         return self.sets[event.full_id].add(event)
 
     def save_to_file(self, path='/tmp'):
-        for k, v in self.sets:
+        for k, v in self.sets.items():
             fname = os.path.join(path, k)
             v.save_file(fname)
 
