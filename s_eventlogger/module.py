@@ -4,6 +4,7 @@ from entropyfw import Module
 from entropyfw.common import get_utc_ts, utc_ts_string
 import numbers
 from .web.api.resources import get_api_resources
+from .web.blueprints import get_blueprint
 from .callbacks import Datalog
 from .exceptions import UnknownFileType
 import os
@@ -23,6 +24,7 @@ class EntropyEventLogger(Module):
         Module.__init__(self, name=name)
         self.data = LogDataHolder()
         self.print_data = print_data
+        self.register_blueprint(get_blueprint(self.name))
         for r in get_api_resources():
             self.register_api_resource(r)
 
@@ -93,6 +95,12 @@ class LogDataHolder(object):
             raise Exception('event_id do not exist')
         return self.sets[event_id].as_dict(max_items)
 
+    def _get_status(self):
+
+        return {k: v.status for k, v in self.sets.items()}
+
+    status = property(_get_status)
+
 
 class LogDataSet(object):
     def __init__(self, event):
@@ -101,6 +109,15 @@ class LogDataSet(object):
         self.values = []
         self.ts_created = get_utc_ts()
         self.ts_last_event = event.ts
+
+    def _get_status(self):
+        return {'full_id': self.event_full_id,
+                'fields': self.fields,
+                'values': len(self.values),
+                'created': self.ts_created,
+                'updated': self.ts_last_event}
+
+    status = property(_get_status)
 
     def add(self, event):
         l = LogData(event)

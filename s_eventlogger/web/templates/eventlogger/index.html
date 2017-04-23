@@ -1,0 +1,18 @@
+{% extends "sys/base.html" %}
+{% block main %}
+    <h1 class="hidden-xs-down"> PicoTech TC08 controller</h1>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-12"><h2>Event ID's</h2></div>
+        </div>
+        <div class="row" id="list_events">
+            <div class="list-group">
+                {% for key, value in status %}
+                    <a href="{{url_for('chart', event_id=key)}}" class="list-group-item list-group-item-action">key</a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

@@ -50,6 +50,20 @@ class GetData(ModuleResource):
                         'result': self.module.as_dict(args['event_id'], max_items)})
 
 
+class ListEvents(ModuleResource):
+    url = 'list_events'
+    description = "List events for which it has data"
+
+    def __init__(self, module):
+        super(ListEvents, self).__init__(module)
+
+    def post(self):
+
+        return jsonify({'args': None,
+                        'utc_ts': get_utc_ts(),
+                        'result': self.module.list_events_ids()})
+
+
 class DownloadCSV(ModuleResource):
     url = 'get_csv'
     description = "Dumps data of an specific event"
@@ -72,4 +86,4 @@ class DownloadCSV(ModuleResource):
 
 
 def get_api_resources():
-    return [RegisterEvent, GetData, DownloadCSV]
+    return [RegisterEvent, GetData, DownloadCSV, ListEvents]
