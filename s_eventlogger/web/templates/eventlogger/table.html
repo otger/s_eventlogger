@@ -1,0 +1,39 @@
+{% extends "sys/base.html" %}
+{% block scripts %}
+    <script>
+
+    </script>
+{% endblock %}
+{% block main %}
+    <h1 class="hidden-xs-down">Event Logger</h1>
+    <h2>Data table for {{ data['event_id'] }}</h2>
+    <div class="container">
+        <div class="row">
+
+            <table class="table table-hover table-inverse">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>ts utc</th>
+                    {% for el in data['event_dataset']['fields'] %}
+                  <th>{{ el }}</th>
+                    {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                    {% for row in data['event_dataset']['values'] %}
+                        <tr>
+                        <th scope="row">{{ loop.index }}</th>
+                        <td>{{ row['utc_ts'] }}</td>
+                        {% for cell in row['values'] %}
+                            <td>{{ cell }}</td>
+                        {% endfor %}
+                        </tr>
+                    {% endfor %}
+              </tbody>
+            </table>
+
+        </div>
+
+    </div>
+{% endblock %}

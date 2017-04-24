@@ -1,18 +1,29 @@
 {% extends "sys/base.html" %}
-{% block main %}
+{% block scripts %}
+<script>
+
+</script>
+{% endblock %}{% block main %}
     <h1 class="hidden-xs-down"> PicoTech TC08 controller</h1>
 
     <div class="container">
         <div class="row">
             <div class="col-12"><h2>Event ID's</h2></div>
         </div>
+        {% for key, value in data['status'].items() %}
         <div class="row" id="list_events">
-            <div class="list-group">
-                {% for key, value in status %}
-                    <a href="{{url_for('chart', event_id=key)}}" class="list-group-item list-group-item-action">key</a>
-                {% endfor %}
+            <div class="col-xs-4">{{key}}</div>
+            <div class="col-xs-2">
+                <a role="button" href="{{url_for(data['mod_name']+'.csv', event_id=key)}}">csv</a>
+            </div>
+            <div class="col-xs-3">
+                <a role="button" href="{{url_for(data['mod_name']+'.chart', event_id=key)}}">chart</a>
+            </div>
+            <div class="col-xs-3">
+                <a role="button" href="{{url_for(data['mod_name']+'.table', event_id=key)}}">table</a>
             </div>
         </div>
+        {% endfor %}
     </div>
 
 {% endblock %}

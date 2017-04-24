@@ -19,6 +19,7 @@ All rights reserved.
 
 class EntropyEventLogger(Module):
     name = 'eventlogger'
+    description = "Module that can store events generated and its data"
 
     def __init__(self, name=None, print_data=False):
         Module.__init__(self, name=name)
@@ -51,8 +52,8 @@ class EntropyEventLogger(Module):
         """
         return self.data.list_event_ids()
 
-    def save_file(self, path='/tmp'):
-        self.data.save_to_file(path)
+    def save_file(self, path='/tmp', event_id=None):
+        self.data.save_to_file(path, event_id=None)
 
     def get_data(self, event_id, max_items=0):
         """
@@ -77,15 +78,18 @@ class LogDataHolder(object):
             self.sets[event.full_id] = LogDataSet(event)
         return self.sets[event.full_id].add(event)
 
-    def save_to_file(self, path='/tmp'):
-        for k, v in self.sets.items():
-            fname = os.path.join(path, k)
-            v.save_to_file(fname)
-
-    def as_csv_str(self, event_id, max_items=0):
+    def save_to_file(self, path='/tmp', event_id=None):
+        if event_id is None:
+            for k in self.sets.keys():
+                self.save_to_file(path=path, event_id=k)
+                return
         if event_id not in self.sets:
             raise Exception('event_id do not exist')
-        return self.sets[event_id].as_csv_str(max_items)
+        fname = os.path.join(path, event_id)
+        self.sets[event_id].save_to_file(fname)
+
+    def as_csv_str(self, event_id, max_items=0):
+        return self.sets[event_id].as_csv_string(max_items)
 
     def list_event_ids(self):
         return self.sets.keys()

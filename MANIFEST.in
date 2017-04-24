@@ -1,0 +1,2 @@
+recursive-include s_eventlogger/web/templates *
+recursive-include s_eventlogger/web/bp_static *

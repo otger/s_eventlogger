@@ -26,7 +26,7 @@ setup(
       version=VERSION,
       description=DESCRIPTION,
       #scripts=scripts,
-      requires=['PicoController'],
+      requires=[],
       install_requires=[],
       provides=[PACKAGENAME],
       author=AUTHOR,
@@ -40,7 +40,7 @@ setup(
                    "Development Status :: 4 - Beta",
                    "Programming Language :: Python",
                   ],
-      #ata=True,
+      include_package_data=True,
       packages=find_packages()
     #zip_safe=True,
 )

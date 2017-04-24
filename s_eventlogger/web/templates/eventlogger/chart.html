@@ -1,243 +1,115 @@
 {% extends "sys/base.html" %}
 {% block scripts %}
-    <script>
-    function getCard(channel, value, type, units, ts){
-        var d = moment.utc(ts*1000);
-        var html = '<div class="col-xs-12 col-md-4 col-lg-3 small_pad" id="get_temp_result_'+channel+'">';
-        html += '<div class="mycard temperature">';
-        html += '<div><p class="small-text">'+channel+'</p></div>';
-        html += '<div class="text-right"><h1>'+parseFloat(value).toFixed(2)+'<small>'+units.charAt(0)+'</small></h1></div>';
-        html += '<div><small>' + d.format('HH:mm:ss')+' UTC</small></div>';
-        html += '</div>';
-        return html;
-    }
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.min.css" rel="stylesheet" type="text/css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.5/nv.d3.min.js"></script>
 
-    function update_temperatures(){
-          data = { }
-        $.ajax({type: "GET",
-                url: "/api/{{ module.name }}/read_channels",
-                contentType: "application/json; charset=UTF-8",
-                data: JSON.stringify(data),
-                dataType: "json",
-                success:function(result){
-                    console.log(result);
-                    var container = $("#get_temperatures_results");
-                    container.empty();
-                    for (var key in result) {
-                        var el = result[key];
-                        container.append(getCard(key, el["value"], el["tc_type"], el["units"], el["ts_utc"]));
+    <style>
+        text {
+            font: 12px sans-serif;
+        }
+        svg {
+            display: block;
+        }
+        #chart, svg {
+            margin: 0px;
+            padding: 0px;
+            height: 100%;
+            min-height: 550px;
+            width: 100%;
+        }
+        html, body {
+            height: 100%;
+        }
+        .container {
+            background-color: #fff8dc;
+        }
+    </style>
+        <script>
+        var NUM_OF_SAMPLES = 1000;
+        /* Inspired by Lee Byron's test data generator. */
+        function stream_layers(n, m, o) {
+          if (arguments.length < 3) o = 0;
+          function bump(a) {
+            var x = 1 / (.1 + Math.random()),
+                y = 2 * Math.random() - .5,
+                z = 10 / (.1 + Math.random());
+            for (var i = 0; i < m; i++) {
+              var w = (i / m - y) * z;
+              a[i] += x * Math.exp(-w * w);
+            }
+          }
+          return d3.range(n).map(function() {
+              var a = [], i;
+              for (i = 0; i < m; i++) a[i] = o + o * Math.random();
+              for (i = 0; i < 5; i++) bump(a);
+              return a.map(stream_index);
+            });
+        }
+
+        /* Another layer generator using gamma distributions. */
+        function stream_waves(n, m) {
+          return d3.range(n).map(function(i) {
+            return d3.range(m).map(function(j) {
+                var x = 20 * j / m - i / 3;
+                return 2 * x * Math.exp(-.5 * x);
+              }).map(stream_index);
+            });
+        }
+        var now = new Date();
+        var start_ts = now.getTime()-(NUM_OF_SAMPLES*1000);
+        console.log(now);
+        console.log(now.getTime())
+        function stream_index(d, i) {
+          return {x: start_ts + i*1000, y: Math.max(0, d)};
+        }
+            var format = d3.time.format.utc.multi([
+            ["%H:%M:%S", function(d) { return d.getSeconds(); }],
+            ["%H:%M", function(d) { return d.getMinutes(); }],
+            ["%d/%m", function(d) { return d.getDay(); }],
+            ["%d/%m%Y", function() { return true; }]
+            ]);
+
+            nv.addGraph(function() {
+                var chart = nv.models.lineWithFocusChart();
+                //chart.brushExtent([50,70]);
+                chart.xAxis.tickFormat(function(d) {
+            // Will Return the date, as "%m/%d/%Y"(08/06/13)
+            return format(new Date(d))
+        }).axisLabel("Stream - 3,"+NUM_OF_SAMPLES+",.1");
+                chart.x2Axis.tickFormat(function(d) {
+            // Will Return the date, as "%m/%d/%Y"(08/06/13)
+            return d3.time.format.utc("%m/%d/%y %X")(new Date(d))
+        });
+                chart.yTickFormat(d3.format(',.2f'));
+                chart.useInteractiveGuideline(true);
+                var a = testData();
+                console.log(a);
+                d3.select('#chart svg')
+                    .datum(a)
+                    .call(chart);
+                nv.utils.windowResize(chart.update);
+                return chart;
+            });
+            function testData() {
+                return stream_layers(3,NUM_OF_SAMPLES,.1).map(function(data, i) {
+                    return {
+                        key: 'Stream' + i,
+                        area: i === 1,
+                        values: data
                     };
+                });
+            }
+        </script>
 
-                }});
-        };
-
-    $(document).ready(function(){
-      $("#get_temperatures_button").click(function(e){
-        e.preventDefault();
-        update_temperatures()});
-      });
-
-    $(document).ready(function(){
-      $("#configure_channel").click(function(e){
-          e.preventDefault();
-          data = { }
-          var selected_channels = $( "select#channel_number" ).val();
-          console.log(selected_channels);
-          if(selected_channels){
-              selected_channels.forEach(function(ch){
-                  data['channel'] = ch;
-                  data['tc_type'] = $( "select#channel_type option:checked" ).val();
-                  data['units'] = $( "select#channel_units option:checked" ).val();
-                  console.log(data);
-                  $.ajax({type: "POST",
-                          url: "/api/{{ module.name }}/enable_channel",
-                          contentType: "application/json; charset=UTF-8",
-                          data: JSON.stringify(data),
-                          dataType: "json",
-                          success:function(result){
-                              console.log(result);
-                              // Todo: add feedback of execution
-                          }});
-                  // update_temperatures(); -- disabled because it always returns 0
-              });
-          }
-      });
-    });
-
-    $(document).ready(function(){
-      $("#disable_channel").click(function(e){
-          e.preventDefault();
-          data = { }
-          var selected_channels = $("select#dis_channel_number").val();
-          console.log(selected_channels);
-          if(selected_channels){
-              selected_channels.forEach(function(ch){
-                  data['channel'] = ch;
-                  console.log(data);
-                $.ajax({type: "POST",
-                        url: "/api/{{ module.name }}/disable_channel",
-                        contentType: "application/json; charset=UTF-8",
-                        data: JSON.stringify(data),
-                        dataType: "json",
-                        success:function(result){
-                            console.log(result);
-                            // Todo: add feedback of execution
-                        }});
-                // update_temperatures(); -- disabled because it always returns 0
-              });
-          }
-        });
-    });
-
-    $(document).ready(function(){
-      $("#start_loop").click(function(e){
-          e.preventDefault();
-          data = { }
-          var interval_seconds = $("input#interval_seconds").val();
-          console.log(interval_seconds);
-          if(interval_seconds){
-              data['interval'] = interval_seconds;
-              console.log(data);
-              $.ajax({type: "POST",
-                    url: "/api/{{ module.name }}/start_temp_loop",
-                    contentType: "application/json; charset=UTF-8",
-                    data: JSON.stringify(data),
-                    dataType: "json",
-                    success:function(result){
-                      console.log(result);
-                      // Todo: add feedback of execution
-                    }});
-          }
-        });
-    });
-
-    $(document).ready(function(){
-      $("#stop_loop").click(function(e){
-          e.preventDefault();
-          data = { }
-              $.ajax({type: "POST",
-                    url: "/api/{{ module.name }}/stop_temp_loop",
-                    contentType: "application/json; charset=UTF-8",
-                    data: JSON.stringify(data),
-                    dataType: "json",
-                    success:function(result){
-                      console.log(result);
-                      // Todo: add feedback of execution
-                    }});
-        });
-    });
-
-    </script>
 {% endblock %}
 {% block main %}
-    <h1 class="hidden-xs-down"> PicoTech TC08 controller</h1>
+    <h1 class="hidden-xs-down">Logger charts</h1>
 
     <div class="container">
-        <div class="row">
-            <div class="col-12"><h2>Get Temperatures</h2></div>
+        <div id="chart" class='with-3d-shadow with-transitions'>
+            <svg></svg>
         </div>
-        <div class="row" id="get_temperatures_results">
-        </div>
-        <div class="row">
-            <form>
-                <button type="submit" class="btn btn-primary" id="get_temperatures_button">Get Temperatures</button>
-            </form>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-12"><h2>Configure Channels</h2></div>
-        </div>
-        <div class="row">
-            <form>
-                <div class="form-group row">
-                    <label for="channel_number" class="col-xs-12 col-md-3 col-lg-2 col-form-label">Select Channels</label>
-                    <div class="col-xs-12 col-md-6 col-lg-4 col-form-label">
-                        <select multiple="true" class="form-control" style="overflow: scroll" id="channel_number">
-                            <option value="0">Channel 0</option>
-                            <option value="1">Channel 1</option>
-                            <option value="2">Channel 2</option>
-                            <option value="3">Channel 3</option>
-                            <option value="4">Channel 4</option>
-                            <option value="5">Channel 5</option>
-                            <option value="6">Channel 6</option>
-                            <option value="7">Channel 7</option>
-                            <option value="8">Channel 8</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label for="channel_type" class="col-xs-12 col-md-3 col-lg-2 col-form-label">Channel Type</label>
-                    <div class="col-xs-12 col-md-6 col-lg-4 col-form-label">
-                        <select class="form-control" id="channel_type">
-                            <option value="B">B</option>
-                            <option value="E">E</option>
-                            <option value="J">J</option>
-                            <option value="K">K</option>
-                            <option value="N">N</option>
-                            <option value="R">R</option>
-                            <option value="S">S</option>
-                            <option value="T" selected="selected">T</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <label for="channel_units"  class="col-xs-12 col-md-3 col-lg-2 col-form-label">Temperature Units</label>
-                    <div class="col-xs-12 col-md-6 col-lg-4 col-form-label">
-                        <select class="form-control" id="channel_units">
-                            <option value="Centigrade">Centigrade</option>
-                            <option value="Fahrenheit">Fahrenheit</option>
-                            <option value="Kelvin" selected="selected">Kelvin</option>
-                            <option value="Rankine">Rankine</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary" id="configure_channel">Configure Channels</button>
-            </form>
-        </div>
-        <hr>
-        <div class="row">
-            <div class="col-12"><h2>Disable Channels</h2></div>
-        </div>
-        <div class="row">
-            <form>
-                <div class="form-group row">
-                    <label for="dis_channel_number" class="col-xs-12 col-md-3 col-lg-2 col-form-label">Select Channels</label>
-                    <div class="col-xs-12 col-md-6 col-lg-4 col-form-label">
-                        <select multiple class="form-control" style="overflow: scroll" id="dis_channel_number">
-                            <option value="0">Channel 0</option>
-                            <option value="1">Channel 1</option>
-                            <option value="2">Channel 2</option>
-                            <option value="3">Channel 3</option>
-                            <option value="4">Channel 4</option>
-                            <option value="5">Channel 5</option>
-                            <option value="6">Channel 6</option>
-                            <option value="7">Channel 7</option>
-                            <option value="8">Channel 8</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary" id="disable_channel">Disable Channel</button>
-            </form>
-        </div>
-
-        <hr>
-        <div class="row">
-            <div class="col-12"><h2>Background loop acquisition</h2></div>
-        </div>
-        <div class="row">
-            <form>
-                <div class="form-group row">
-                    <label for="interval_seconds" class="col-xs-12 col-md-3 col-lg-2 col-form-label">Interval (seconds)</label>
-                    <div class="col-xs-12 col-md-6 col-lg-4 col-form-label">
-                        <input class="form-control" type="number" value="5" id="interval_seconds">
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary" id="start_loop">Start loop</button>
-                <button type="submit" class="btn btn-primary" id="stop_loop">Stop loop</button>
-            </form>
-        </div>
-
-
 
     </div>
 {% endblock %}
