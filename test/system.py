@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from entropyfw import Dealer
-from s_pico_tc08.module import EntropyPicoTc08
+from entropyfw import System
+from s_tti_cpx.module import EntropyTTiCPX
 from entropyfw.common.request import Request
 import time
 """
@@ -11,11 +11,11 @@ All rights reserved.
 """
 
 
-class SystemTC08(object):
+class SystemTC08(System):
 
-    def __init__(self):
-        self.dealer = Dealer()
-        self.m1 = EntropyPicoTc08(dealer=self.dealer, channels=[0])
+    def __init__(self, flask_app):
+        System.__init__(self, flask_app)
+        self.add_module(EntropyTTiCPX())
 
     def exit(self):
         self.dealer.exit()
