@@ -1,10 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from entropyfw.api.rest import ModuleResource
+from entropyfw.api.rest import ModuleResource, REST_STATUS
 from flask import jsonify, make_response
 from flask_restful import reqparse
 from entropyfw.common import get_utc_ts
 from PicoController.common.definitions import THERMOCOUPLES, UNITS
+from .logger import log
 
 """
 resources
@@ -24,11 +25,13 @@ class RegisterEvent(ModuleResource):
 
     def post(self):
         args = self.reqparse.parse_args()
-        self.module.add_log(args['event_re'])
-
-        return jsonify({'args': args,
-                        'utc_ts': get_utc_ts(),
-                        'result': 'done'})
+        try:
+            self.module.add_log(args['event_re'])
+        except Exception as ex:
+            log.exception('Exception when starting status publication loop')
+            return self.jsonify_return(status=REST_STATUS.Error, result=str(ex), args=args)
+        else:
+            return self.jsonify_return(status=REST_STATUS.Done, result=None, args=args)
 
 
 class GetData(ModuleResource):
@@ -44,10 +47,13 @@ class GetData(ModuleResource):
     def post(self):
         args = self.reqparse.parse_args()
         max_items = args.get('max_items', 0)
-
-        return jsonify({'args': args,
-                        'utc_ts': get_utc_ts(),
-                        'result': self.module.as_dict(args['event_id'], max_items)})
+        try:
+            values = self.module.as_dict(args['event_id'], max_items)
+        except Exception as ex:
+            log.exception('Exception when starting status publication loop')
+            return self.jsonify_return(status=REST_STATUS.Error, result=str(ex), args=args)
+        else:
+            return self.jsonify_return(status=REST_STATUS.Done, result=values, args=args)
 
 
 class ListEvents(ModuleResource):
@@ -59,9 +65,13 @@ class ListEvents(ModuleResource):
 
     def post(self):
 
-        return jsonify({'args': None,
-                        'utc_ts': get_utc_ts(),
-                        'result': self.module.list_events_ids()})
+        try:
+            values = self.module.list_events_ids()
+        except Exception as ex:
+            log.exception('Exception when starting status publication loop')
+            return self.jsonify_return(status=REST_STATUS.Error, result=str(ex))
+        else:
+            return self.jsonify_return(status=REST_STATUS.Done, result=values)
 
 
 class DownloadCSV(ModuleResource):
