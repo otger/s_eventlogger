@@ -21,7 +21,7 @@
         html, body {
             height: 100%;
         }
-        .container {
+        .chart_container {
             background-color: #fff8dc;
         }
     </style>
@@ -107,8 +107,16 @@
     <h1 class="hidden-xs-down">Logger charts</h1>
 
     <div class="container">
-        <div id="chart" class='with-3d-shadow with-transitions'>
-            <svg></svg>
+        <div class="row">
+            <div class="col-3"><a role="button" href="{{ url_for('.index') }}">logger main</a></div>
+            <div class="col-3"><a role="button" href="{{ url_for('.events_list') }}">register events</a></div>
+        </div>
+        <div class=""row">
+            <div class="chart_container">
+                <div id="chart" class='with-3d-shadow with-transitions'>
+                    <svg></svg>
+                </div>
+            </div>
         </div>
 
     </div>

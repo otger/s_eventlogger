@@ -21,10 +21,12 @@ class EntropyEventLogger(Module):
     name = 'eventlogger'
     description = "Module that can store events generated and its data"
 
-    def __init__(self, name=None, print_data=False):
+    def __init__(self, name=None, print_data=False, backup_path=None, backup_interval=300):
         Module.__init__(self, name=name)
+        self.backup = Backups(module=self, backup_path=backup_path, backup_interval=backup_interval)
         self.data = LogDataHolder()
         self.print_data = print_data
+
         self.register_blueprint(get_blueprint(self.name))
         for r in get_api_resources():
             self.register_api_resource(r)
@@ -44,6 +46,8 @@ class EntropyEventLogger(Module):
         d = self.data.add(event)
         if self.print_data:
             print(d)
+        self.backup.save(event)
+
 
     def list_event_ids(self):
         """
@@ -209,3 +213,17 @@ class LogData(object):
     def _get_fields(self):
         return self.values.keys()
     fields = property(_get_fields)
+
+
+class Backups(object):
+    def __init__(self, module, backup_path, backup_interval=60):
+        self.module = module
+        self.backup_path = backup_path
+        self.interval = backup_interval
+        self._ts_saved = {}
+
+    def save(self, event):
+        if self.backup_path:
+            if event.full_id not in self._ts_saved or  event.ts - self._ts_saved[event.full_id] > self.interval:
+                self.module.save_file(path=self.backup_path, event_id=event.full_id)
+                self._ts_saved[event.full_id] = event.ts

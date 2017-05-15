@@ -33,6 +33,7 @@ def get_blueprint(mod_name):
 class EventLoggerBluePrint(EntropyBlueprint):
     def register_routes(self):
         self.add_url_rule('/', 'index', self.index)
+        self.add_url_rule('/events_list/', 'events_list', self.events_list)
         self.add_url_rule('/chart/<event_id>', 'chart', self.chart)
         self.add_url_rule('/csv/<event_id>', 'csv', self.csv)
         self.add_url_rule('/table/<event_id>', 'table', self.table)
@@ -47,7 +48,8 @@ class EventLoggerBluePrint(EntropyBlueprint):
 
     def chart(self, event_id):
         try:
-            data = {'event_id': event_id}
+            data = {'event_id': event_id,
+                    'data_dict': self.mod_parent.module.as_dict(event_id)}
             return self.render_template('eventlogger/chart.html', data=data)
         except TemplateNotFound:
             abort(404)
@@ -68,3 +70,10 @@ class EventLoggerBluePrint(EntropyBlueprint):
         except TemplateNotFound:
             abort(404)
 
+    def events_list(self):
+        try:
+            data = {'mod_name': self.name,
+                    'event_stats': self.mod_parent.sys_info.event_stats}
+            return self.render_template('eventlogger/events_list.html', data=data)
+        except TemplateNotFound:
+            abort(404)

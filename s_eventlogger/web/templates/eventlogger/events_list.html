@@ -1,0 +1,59 @@
+{% extends "sys/base.html" %}
+{% block scripts %}
+<script>
+    $(document).ready(function(){
+      $("div.reg_event a").click(function(e){
+          e.preventDefault();
+          console.log(e);
+          var clicked_id = e.target.id;
+          var selected = clicked_id.substring(9, clicked_id.length);
+          console.log(selected);
+          data = {'event_re': selected };
+          $.ajax({type: "POST",
+                  url: "/api/{{ module.name }}/register_event",
+                  contentType: "application/json; charset=UTF-8",
+                  data: JSON.stringify(data),
+                  dataType: "json",
+                  success:function(result){
+                    console.log(result);
+                    if (result['status'] == 'Error'){
+                      showAlert(result['result'], 'Error');
+                    }else{
+                      showAlert("Registered event", 'Success');
+                    }
+                  },
+                  error:function(result){
+                    console.log(result);
+                    showAlert("An error happened", 'Error');
+                  },
+           });
+
+      });
+    });
+
+</script>
+{% endblock %}{% block main %}
+    <h1 class="hidden-xs-down"> PicoTech TC08 controller</h1>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-3"><a href="{{ url_for('.index') }}">logger main</a></div>
+        </div>
+
+        <div class="row">
+            <div class="col-12"><h2>Event ID's published until now</h2></div>
+        </div>
+        {% for key, value in data['event_stats'].items() %}
+        <div class="row" id="list_events">
+            <div class="col-xs-6">{{key}}</div>
+            <div class="col-xs-3">
+                {{ value }}
+            </div>
+            <div class="reg_event col-xs-3">
+                <a role="button" id="register_{{key}}">register</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+{% endblock %}
