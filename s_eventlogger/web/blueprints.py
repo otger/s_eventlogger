@@ -49,7 +49,7 @@ class EventLoggerBluePrint(EntropyBlueprint):
     def chart(self, event_id):
         try:
             data = {'event_id': event_id,
-                    'data_dict': self.mod_parent.module.as_dict(event_id)}
+                    'data_dict': self.mod_parent.get_data(event_id)}
             return self.render_template('eventlogger/chart.html', data=data)
         except TemplateNotFound:
             abort(404)

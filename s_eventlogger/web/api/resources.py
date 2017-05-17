@@ -46,9 +46,10 @@ class GetData(ModuleResource):
 
     def post(self):
         args = self.reqparse.parse_args()
+        event_id = args['event_id']
         max_items = args.get('max_items', 0)
         try:
-            values = self.module.as_dict(args['event_id'], max_items)
+            values = self.module.get_data(event_id, max_items)
         except Exception as ex:
             log.exception('Exception when starting status publication loop')
             return self.jsonify_return(status=REST_STATUS.Error, result=str(ex), args=args)

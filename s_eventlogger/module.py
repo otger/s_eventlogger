@@ -176,9 +176,9 @@ class LogDataSet(object):
 
     def as_dict(self, max_items=0):
         data = {'fields': self.fields, 'created_utc_ts': self.ts_created, 'updated_utc_ts': self.ts_last_event,
-                'total_elements': len(self.values), 'values':[]}
+                'total_elements': len(self.values), 'values': []}
         for el in self.values[-max_items:]:
-            data['values'].append({'utc_ts': el.ts, 'values':el.as_list(self.fields)})
+            data['values'].append({'utc_ts': el.ts, 'values': el.as_list(self.fields)})
         data['written_elements'] = len(data['values'])
         return data
 
