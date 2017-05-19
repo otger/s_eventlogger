@@ -48,7 +48,6 @@ class EntropyEventLogger(Module):
             print(d)
         self.backup.save(event)
 
-
     def list_event_ids(self):
         """
         Returns a list of all events full ids with data logged
@@ -76,6 +75,7 @@ class LogDataHolder(object):
 
     def __init__(self):
         self.sets = {}
+        self._started_on = get_utc_ts()
 
     def add(self, event):
         if event.full_id not in self.sets:
@@ -89,7 +89,7 @@ class LogDataHolder(object):
                 return
         if event_id not in self.sets:
             raise Exception('event_id do not exist')
-        fname = os.path.join(path, event_id)
+        fname = os.path.join(path, '{}.{}'.format(self._started_on, event_id))
         self.sets[event_id].save_to_file(fname)
 
     def as_csv_str(self, event_id, max_items=0):
@@ -224,6 +224,6 @@ class Backups(object):
 
     def save(self, event):
         if self.backup_path:
-            if event.full_id not in self._ts_saved or  event.ts - self._ts_saved[event.full_id] > self.interval:
+            if event.full_id not in self._ts_saved or event.ts - self._ts_saved[event.full_id] > self.interval:
                 self.module.save_file(path=self.backup_path, event_id=event.full_id)
                 self._ts_saved[event.full_id] = event.ts

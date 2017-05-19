@@ -16,10 +16,7 @@ class SystemLoggerTest(System):
     def __init__(self, flask_app):
         System.__init__(self, flask_app)
         self.add_module(EntropyPicoTc08(name='thermocouples'))
-        self.add_module(EntropyEventLogger(name='logger'))
-
-    def exit(self):
-        pass
+        self.add_module(EntropyEventLogger(name='logger', backup_path='/tmp', backup_interval=60))
 
 
 if __name__ == "__main__":

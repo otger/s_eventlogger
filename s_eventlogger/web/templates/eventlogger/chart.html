@@ -104,7 +104,6 @@ function prepare_data(){
 }
 
 function update_data(){
-  var good = false;
 
   data = {event_id: '{{ data['event_id'] }}',
           max_items: 0};
@@ -125,7 +124,6 @@ function update_data(){
                 }else{
                   add_chart();
                 }
-                good = true;
             }
         },
         error:function(result){
@@ -142,6 +140,7 @@ $(document).ready(function(){
     });
   });
 
+var intervalID = setInterval(update_data, 5000);
 
 // var NUM_OF_SAMPLES = 1000;
 // /* Inspired by Lee Byron's test data generator. */
