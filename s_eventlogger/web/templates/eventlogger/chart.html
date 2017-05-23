@@ -97,7 +97,7 @@ function prepare_data(){
   }
   for (var i=0; i < values.length; i++){
     for (var sensor = 0; sensor < values[i].values.length; sensor++){
-      formatted_data[sensor].values.push({series: sensor, x: values[i].utc_ts, y: values[i].values[sensor]});
+      formatted_data[sensor].values.push({series: sensor, x: values[i].utc_ts*1000, y: values[i].values[sensor]});
     }
   }
   console.log(formatted_data);
