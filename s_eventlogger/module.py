@@ -58,14 +58,14 @@ class EntropyEventLogger(Module):
     def save_file(self, path='/tmp', event_id=None):
         self.data.save_to_file(path, event_id=None)
 
-    def get_data(self, event_id, max_items=0):
+    def get_data(self, event_id, max_items=0, subset=False):
         """
         Return
         :param event_id: full_id of the event
         :param max_values: Maximum number of data values to return, 0 for all
         :return: dictionary with data and metadata
         """
-        return self.data.as_dict(event_id, max_items)
+        return self.data.as_dict(event_id, max_items, subset)
 
     def as_csv_str(self, event_id, max_items=0):
         return self.data.as_csv_str(event_id, max_items)
@@ -98,10 +98,10 @@ class LogDataHolder(object):
     def list_event_ids(self):
         return self.sets.keys()
 
-    def as_dict(self, event_id, max_items=0):
+    def as_dict(self, event_id, max_items=0, subset=False):
         if event_id not in self.sets:
             raise Exception('event_id do not exist')
-        return self.sets[event_id].as_dict(max_items)
+        return self.sets[event_id].as_dict(max_items, subset)
 
     def _get_status(self):
 
@@ -174,11 +174,22 @@ class LogDataSet(object):
         else:
             raise UnknownFileType("{0} is an unknown file type".format(ftype))
 
-    def as_dict(self, max_items=0):
+    def as_dict(self, max_items=0, subset=False):
         data = {'fields': self.fields, 'created_utc_ts': self.ts_created, 'updated_utc_ts': self.ts_last_event,
                 'total_elements': len(self.values), 'values': []}
-        for el in self.values[-max_items:]:
-            data['values'].append({'utc_ts': el.ts, 'values': el.as_list(self.fields)})
+        if subset and max_items:
+            step = len(self.values) // max_items
+            if step == 0:
+                for el in self.values:
+                    data['values'].append({'utc_ts': el.ts, 'values': el.as_list(self.fields)})
+            else:
+                for ix in range(0, len(self.values), step):
+                    el = self.values[ix]
+                    data['values'].append({'utc_ts': el.ts, 'values': el.as_list(self.fields)})
+
+        else:
+            for el in self.values[-max_items:]:
+                data['values'].append({'utc_ts': el.ts, 'values': el.as_list(self.fields)})
         data['written_elements'] = len(data['values'])
         return data
 

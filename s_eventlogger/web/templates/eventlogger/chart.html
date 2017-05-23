@@ -104,9 +104,10 @@ function prepare_data(){
 }
 
 function update_data(){
-
+  subset =
   data = {event_id: '{{ data['event_id'] }}',
-          max_items: 0};
+          max_items: 1000,
+          subset: $('#subset').prop('checked');};
   $.ajax({type: "POST",
         url: "/api/{{ module.name }}/get_data",
         contentType: "application/json; charset=UTF-8",
@@ -140,6 +141,7 @@ $(document).ready(function(){
     });
   });
 
+update_data();
 var intervalID = setInterval(update_data, 5000);
 
 // var NUM_OF_SAMPLES = 1000;
@@ -244,7 +246,15 @@ var intervalID = setInterval(update_data, 5000);
         <div class="row">
             <div class="col-12"><a class="btn btn-primary" role="button" href="{{ url_for('.index') }}">logger main</a> - <a class="btn btn-primary" role="button" href="{{ url_for('.events_list') }}">register events</a></div>
         </div>
-        <div class=""row">
+        <div class="row">
+            <div class="col-4">
+                <label class="form-check-label">
+                    <input class="form-check-input" type="checkbox" value="" id="subset" checked>
+                    Return a subset of the values (last values if unchecked)
+                </label>
+            </div>
+        </div>
+        <div class="row">
             <div class="chart_container">
                 <div id="chart" class='with-3d-shadow with-transitions'>
                     <svg></svg>

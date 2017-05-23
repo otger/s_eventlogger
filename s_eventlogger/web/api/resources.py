@@ -43,13 +43,15 @@ class GetData(ModuleResource):
         self.reqparse = reqparse.RequestParser()
         self.reqparse.add_argument('event_id', type=str, required=True, location='json')
         self.reqparse.add_argument('max_items', type=int, location='json')
+        self.reqparse.add_argument('subset', type=bool, location='json')
 
     def post(self):
         args = self.reqparse.parse_args()
         event_id = args['event_id']
         max_items = args.get('max_items', 0)
+        subset = args.get('subset', False)
         try:
-            values = self.module.get_data(event_id, max_items)
+            values = self.module.get_data(event_id, max_items, subset)
         except Exception as ex:
             log.exception('Exception when starting status publication loop')
             return self.jsonify_return(status=REST_STATUS.Error, result=str(ex), args=args)
