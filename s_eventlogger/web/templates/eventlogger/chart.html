@@ -107,7 +107,7 @@ function update_data(){
   subset =
   data = {event_id: '{{ data['event_id'] }}',
           max_items: 1000,
-          subset: $('#subset').prop('checked');};
+          subset: $('#subset').prop('checked')};
   $.ajax({type: "POST",
         url: "/api/{{ module.name }}/get_data",
         contentType: "application/json; charset=UTF-8",
