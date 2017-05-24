@@ -236,6 +236,7 @@ class Backups(object):
     def save(self, event):
         if self.backup_path:
             try:
+                log.debug("Check Backup for {}. Curr_ts: {} Last saved ts: {}".format(event.full_id, event.ts, self._ts_saved.get(event.full_id, None)))
                 if event.full_id not in self._ts_saved or event.ts - self._ts_saved[event.full_id] > self.interval:
                     self.module.save_file(path=self.backup_path, event_id=event.full_id)
                     self._ts_saved[event.full_id] = event.ts
