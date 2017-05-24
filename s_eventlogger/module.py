@@ -9,7 +9,7 @@ from .callbacks import Datalog
 from .exceptions import UnknownFileType
 import os
 import io
-
+from .logger import log
 """
 module
 Created by otger on 23/03/17.
@@ -235,6 +235,9 @@ class Backups(object):
 
     def save(self, event):
         if self.backup_path:
-            if event.full_id not in self._ts_saved or event.ts - self._ts_saved[event.full_id] > self.interval:
-                self.module.save_file(path=self.backup_path, event_id=event.full_id)
-                self._ts_saved[event.full_id] = event.ts
+            try:
+                if event.full_id not in self._ts_saved or event.ts - self._ts_saved[event.full_id] > self.interval:
+                    self.module.save_file(path=self.backup_path, event_id=event.full_id)
+                    self._ts_saved[event.full_id] = event.ts
+            except:
+                log.exception('Error when saving backup')
